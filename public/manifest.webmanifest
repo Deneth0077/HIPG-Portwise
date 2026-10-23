@@ -1,0 +1,17 @@
+{
+  "name": "HIPG Digital Twin · Hambantota International Port",
+  "short_name": "HIPG Twin",
+  "description": "Live 3D Digital Twin and Yard Management System for Hambantota International Port (HIPG), Sri Lanka.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#F3EFE6",
+  "theme_color": "#FFFDF8",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
