@@ -17,7 +17,6 @@ export const VehicleMeshGroup = memo(function VehicleMeshGroup({
   instances,
 }: VehicleMeshGroupProps) {
   const count = instances.length;
-  if (count === 0) return null;
 
   const geos = useMemo(() => VehicleFactory.getGeometries(vehicleClass), [vehicleClass]);
   const mats = useMemo(() => VehicleFactory.getMaterials(), []);
@@ -68,6 +67,8 @@ export const VehicleMeshGroup = memo(function VehicleMeshGroup({
     if (rMesh) rMesh.computeBoundingSphere();
     if (dMesh) dMesh.computeBoundingSphere();
   }, [instances, count]);
+
+  if (count === 0) return null;
 
   return (
     <group name={`vehicle-group-${vehicleClass}`}>

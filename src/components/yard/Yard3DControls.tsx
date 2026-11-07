@@ -210,44 +210,85 @@ export const Yard3DControls = memo(function Yard3DControls() {
           <span className="font-mono text-slate text-[10.5px] ml-0.5">{currentDim.rotation}°</span>
         </div>
 
-        {/* Size */}
-        <div className="flex items-center gap-1 bg-sand/60 px-2 py-1 rounded-[10px]">
-          <span className="font-semibold text-slate mr-1">Size:</span>
-          <button
-            type="button"
-            onClick={() => resize(-4, 0)}
-            className="grid h-7 w-6 place-items-center rounded-[6px] bg-paper text-ink shadow-sm hover:bg-sand transition-colors font-bold"
-            title="Shrink Width"
-          >
-            W-
-          </button>
-          <button
-            type="button"
-            onClick={() => resize(4, 0)}
-            className="grid h-7 w-6 place-items-center rounded-[6px] bg-paper text-ink shadow-sm hover:bg-sand transition-colors font-bold"
-            title="Expand Width"
-          >
-            W+
-          </button>
-          <button
-            type="button"
-            onClick={() => resize(0, -2)}
-            className="grid h-7 w-6 place-items-center rounded-[6px] bg-paper text-ink shadow-sm hover:bg-sand transition-colors font-bold"
-            title="Shrink Length"
-          >
-            L-
-          </button>
-          <button
-            type="button"
-            onClick={() => resize(0, 2)}
-            className="grid h-7 w-6 place-items-center rounded-[6px] bg-paper text-ink shadow-sm hover:bg-sand transition-colors font-bold"
-            title="Expand Length"
-          >
-            L+
-          </button>
-          <span className="font-mono text-slate text-[10.5px] ml-1">
-            {currentDim.width}×{currentDim.length}m
-          </span>
+        {/* Size (Direct Numeric Inputs + Step Buttons) */}
+        <div className="flex items-center gap-1.5 bg-sand/60 px-2 py-1 rounded-[10px]">
+          <span className="font-semibold text-slate text-[11px]">Size:</span>
+
+          {/* Width Controls */}
+          <div className="flex items-center gap-1 border-r border-hairline/70 pr-1.5">
+            <span className="text-[10px] font-bold text-slate uppercase">W</span>
+            <input
+              type="number"
+              min={6}
+              max={300}
+              value={currentDim.width}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val) && val > 0) {
+                  setDraftDimensions({
+                    ...currentDim,
+                    width: Math.max(6, val),
+                  });
+                }
+              }}
+              className="w-12 rounded-[5px] border border-hairline bg-paper px-1 py-0.5 font-mono text-[11px] font-bold text-ink text-center outline-none focus:border-signal"
+              title="Width in meters (Type custom value)"
+            />
+            <button
+              type="button"
+              onClick={() => resize(-2, 0)}
+              className="grid h-6 w-6 place-items-center rounded-[5px] bg-paper text-ink shadow-xs hover:bg-sand transition-colors font-bold text-[10px]"
+              title="Shrink Width by 2m"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              onClick={() => resize(2, 0)}
+              className="grid h-6 w-6 place-items-center rounded-[5px] bg-paper text-ink shadow-xs hover:bg-sand transition-colors font-bold text-[10px]"
+              title="Expand Width by 2m"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Length Controls */}
+          <div className="flex items-center gap-1 pl-0.5">
+            <span className="text-[10px] font-bold text-slate uppercase">L</span>
+            <input
+              type="number"
+              min={6}
+              max={300}
+              value={currentDim.length}
+              onChange={(e) => {
+                const val = parseInt(e.target.value, 10);
+                if (!isNaN(val) && val > 0) {
+                  setDraftDimensions({
+                    ...currentDim,
+                    length: Math.max(6, val),
+                  });
+                }
+              }}
+              className="w-12 rounded-[5px] border border-hairline bg-paper px-1 py-0.5 font-mono text-[11px] font-bold text-ink text-center outline-none focus:border-signal"
+              title="Length in meters (Type custom value)"
+            />
+            <button
+              type="button"
+              onClick={() => resize(0, -2)}
+              className="grid h-6 w-6 place-items-center rounded-[5px] bg-paper text-ink shadow-xs hover:bg-sand transition-colors font-bold text-[10px]"
+              title="Shrink Length by 2m"
+            >
+              -
+            </button>
+            <button
+              type="button"
+              onClick={() => resize(0, 2)}
+              className="grid h-6 w-6 place-items-center rounded-[5px] bg-paper text-ink shadow-xs hover:bg-sand transition-colors font-bold text-[10px]"
+              title="Expand Length by 2m"
+            >
+              +
+            </button>
+          </div>
         </div>
       </div>
     </div>

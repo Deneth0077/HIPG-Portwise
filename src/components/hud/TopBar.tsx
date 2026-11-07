@@ -1,14 +1,16 @@
 import { useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { Bell, ChevronDown, Container, LayoutDashboard, MapPin, Network, Package, Search, Ship } from "lucide-react";
+import { Bell, ChevronDown, Container, LayoutDashboard, MapPin, Network, Package, Search, Ship, Cctv } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { SIM_START_SEC, fmtClock, timeControl, useClock } from "@/sim/simStore";
 import { usePort } from "@/state/PortProvider";
+import { useCctvManagement } from "@/state/CctvManagementProvider";
 import { ALERTS, BERTH_COUNT, CARRIER_NAME, PORT_NAME } from "@/data/port";
 import { HipgLogo } from "@/components/HipgLogo";
 import { AlertRow } from "./AlertsPanel";
+import { TwinModeToolbar } from "@/components/twin/TwinModeToolbar";
 
 const TABS = [
   { to: "/", label: "Overview", icon: LayoutDashboard, end: true },
@@ -46,6 +48,7 @@ function LiveClock() {
 
 export function TopBar() {
   const { setSearchOpen, open } = usePort();
+  const { isCctvMode, setIsCctvMode } = useCctvManagement();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -91,7 +94,28 @@ export function TopBar() {
             <span className="sr-only xl:not-sr-only">{t.label}</span>
           </NavLink>
         ))}
+
+        {/* CCTV Management Mode Button */}
+        <button
+          type="button"
+          onClick={() => setIsCctvMode(!isCctvMode)}
+          aria-pressed={isCctvMode}
+          title="Toggle CCTV Towers & Camera Coverage Management"
+          className={cn(
+            "flex h-10 min-w-10 items-center justify-center gap-2 whitespace-nowrap rounded-[10px] px-2 text-[13.5px] font-semibold transition-all max-[359px]:min-w-9 max-[359px]:px-1.5 sm:px-2.5 xl:px-3",
+            isCctvMode
+              ? "bg-signal text-white shadow-xs"
+              : "text-ink/80 hover:bg-sand hover:text-ink"
+          )}
+        >
+          <Cctv className="h-[18px] w-[18px] shrink-0 xl:h-[17px] xl:w-[17px]" aria-hidden="true" />
+          <span className="sr-only xl:not-sr-only">CCTV Towers</span>
+        </button>
       </nav>
+
+      <div className="hidden lg:flex items-center ml-1">
+        <TwinModeToolbar />
+      </div>
 
       <button
         type="button"

@@ -19,6 +19,11 @@ import { CameraRig } from "./CameraRig";
 import { boot } from "@/state/boot";
 import { SceneReady } from "./SceneReady";
 import { Lightning, Rain, SkyRig } from "./Atmosphere";
+import { CctvSceneLayer } from "./cctv/CctvSceneLayer";
+import { BuildPlacementGhost } from "./twin/BuildPlacementGhost";
+import { EditSelectionGizmo } from "./twin/EditSelectionGizmo";
+import { InteractiveFences } from "./twin/InteractiveFences";
+import { FenceLineDrawingGhost } from "./twin/FenceLineDrawingGhost";
 
 /** Phones and tablets: lighter pixel ratio and shadow map to keep frame rate and battery in check. */
 const IS_LITE = typeof window !== "undefined" && (window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 1024);
@@ -59,6 +64,11 @@ function World() {
         <YardCrane key={id} blockId={id} phase={phase} />
       ))}
       <Trucks />
+      <CctvSceneLayer />
+      <InteractiveFences />
+      <FenceLineDrawingGhost />
+      <BuildPlacementGhost />
+      <EditSelectionGizmo />
       <Rain />
       <Lightning />
     </>

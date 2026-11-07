@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { Eye, EyeOff, Home, Maximize, Minimize, Minus, Plus, RotateCw, Share, SquarePlus } from "lucide-react";
+import { Eye, EyeOff, Home, Maximize, Minimize, Minus, Plus, RotateCw, Share, SquarePlus, Cctv } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { fullscreen, useIsFullscreen, type FullscreenSupport } from "@/state/fullscreen";
 import { cameraApi } from "@/three/CameraRig";
 import { usePort } from "@/state/PortProvider";
+import { useCctvManagement } from "@/state/CctvManagementProvider";
+import { useYardManagement } from "@/state/YardManagementProvider";
+import { useRoadManagement } from "@/state/RoadManagementProvider";
+import { Route as RoadIcon, Grid3X3 } from "lucide-react";
 import { SkyWeatherButton } from "./SkyWeather";
 import { ShipTypeFilter } from "./ShipTypeFilter";
 import { ShareViewButton } from "./ShareView";
@@ -150,10 +154,67 @@ function FullscreenToggle() {
 
 export function CameraRail() {
   const { goHome } = usePort();
+  const { isCctvMode, setIsCctvMode } = useCctvManagement();
+  const { is3DEditMode, setIs3DEditMode } = useYardManagement();
+  const { isRoadEditMode, setIsRoadEditMode } = useRoadManagement();
   const btn = "grid h-11 w-11 place-items-center text-ink transition-colors hover:bg-sand active:bg-sand lg:h-10 lg:w-10";
   return (
     <div className="pointer-events-auto flex flex-col items-end gap-2">
     <HudToggle />
+    
+    {/* Yard 3D Move & Resize Mode Toggle */}
+    <button
+      type="button"
+      onClick={() => {
+        setIs3DEditMode(!is3DEditMode);
+        if (!is3DEditMode) setIsRoadEditMode(false);
+      }}
+      aria-pressed={is3DEditMode}
+      title={is3DEditMode ? "Close Yard 3D Edit Mode" : "Yard Edit: Move, Resize (W/L), Rotate Yards in 3D"}
+      className={cn(
+        "relative grid h-11 w-11 place-items-center rounded-[14px] border shadow-panel transition-[background-color,border-color,transform] duration-300 active:scale-90",
+        is3DEditMode
+          ? "border-sky-500 bg-sky-600 text-white shadow-sky-500/30 hover:bg-sky-500"
+          : "border-hairline bg-paper text-ink hover:bg-sand"
+      )}
+    >
+      <Grid3X3 className="h-[19px] w-[19px]" />
+    </button>
+
+    {/* Road 3D Edit & Add Road Mode Toggle */}
+    <button
+      type="button"
+      onClick={() => {
+        setIsRoadEditMode(!isRoadEditMode);
+        if (!isRoadEditMode) setIs3DEditMode(false);
+      }}
+      aria-pressed={isRoadEditMode}
+      title={isRoadEditMode ? "Close Road Edit Mode" : "Road Edit: Move, Adjust, or Add New Roads (+ Add Road)"}
+      className={cn(
+        "relative grid h-11 w-11 place-items-center rounded-[14px] border shadow-panel transition-[background-color,border-color,transform] duration-300 active:scale-90",
+        isRoadEditMode
+          ? "border-amber-500 bg-amber-600 text-white shadow-amber-500/30 hover:bg-amber-500"
+          : "border-hairline bg-paper text-ink hover:bg-sand"
+      )}
+    >
+      <RoadIcon className="h-[19px] w-[19px]" />
+    </button>
+
+    {/* CCTV Tower Coverage Toggle */}
+    <button
+      type="button"
+      onClick={() => setIsCctvMode(!isCctvMode)}
+      aria-pressed={isCctvMode}
+      title={isCctvMode ? "Exit CCTV Management Mode" : "Open CCTV Tower & Coverage Management"}
+      className={cn(
+        "grid h-11 w-11 place-items-center rounded-[14px] border shadow-panel transition-[background-color,border-color,transform] duration-300 active:scale-90",
+        isCctvMode
+          ? "border-signal bg-signal text-white hover:bg-signal/90"
+          : "border-hairline bg-paper text-ink hover:bg-sand"
+      )}
+    >
+      <Cctv className="h-[19px] w-[19px]" />
+    </button>
     <SkyWeatherButton />
     <ShipTypeFilter />
     <FullscreenToggle />

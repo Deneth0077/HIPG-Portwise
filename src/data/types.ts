@@ -96,7 +96,7 @@ export interface Truck {
   trip?: string;
   facilityId?: string;
   cab: string;
-  gate?: "Gate A" | "Gate B";
+  gate?: "Gate A" | "Gate B" | "Gate 01" | string;
   driver: string;
   containerColor: string;
   route: RoutePoint[];

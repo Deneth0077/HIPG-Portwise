@@ -195,7 +195,7 @@ const HipgCraneStack = memo(function HipgCraneStack({ progress, isDone }: { prog
       ))}
 
       {/* trolley, cable and the box on the hook */}
-      <div className="absolute transition-[left] duration-500 ease-[cubic-bezier(0.5,0,0.3,1)]" style={{ left: trolleyX - 9, top: BOOM_Y - 3 }}>
+      <div className="absolute transition-[left] duration-500 ease-&lsqb;cubic-bezier(0.5,0,0.3,1)&rsqb;" style={{ left: trolleyX - 9, top: BOOM_Y - 3 }}>
         <div className="h-[11px] w-[18px] rounded-[2px] bg-[#002040]" />
         <div className="absolute left-1/2 top-[11px] origin-top" style={{ height: hangY - BOOM_Y - 8 }}>
           <div className={cn("relative h-full", !isDone && "pw-sway")} style={{ transformOrigin: "50% 0" }}>
@@ -287,7 +287,7 @@ export function BootScreen() {
       aria-busy={!isFull}
       aria-label={isFull ? "Terminal ready" : `Loading HIPG Digital Twin, ${pct}%`}
       className={cn(
-        "fixed inset-0 z-[100] flex flex-col overflow-hidden bg-canvas transition-[opacity,visibility] duration-[900ms] ease-out",
+        "fixed inset-0 z-[100] flex flex-col overflow-hidden bg-canvas transition-[opacity,visibility] duration-&lsqb;900ms&rsqb; ease-out",
         phase === "leaving" && "invisible opacity-0",
       )}
     >
@@ -322,7 +322,7 @@ export function BootScreen() {
         <span className="hidden sm:inline text-signal/90 font-bold">HIPG · 3D Digital Twin & YMS</span>
       </div>
 
-      <div className={cn("relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 transition-transform duration-[900ms] ease-out", phase === "leaving" && "scale-[1.04]")}>
+      <div className={cn("relative flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 transition-transform duration-&lsqb;900ms&rsqb; ease-out", phase === "leaving" && "scale-[1.04]")}>
         <div className="w-full max-w-[420px] py-4">
           {/* Animated HIPG Crane & Radar Scope */}
           <div className="origin-top max-[399px]:-mb-[36px] max-[399px]:scale-[0.85] [@media(max-height:600px)]:hidden">

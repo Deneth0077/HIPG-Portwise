@@ -20,6 +20,7 @@ import { SUV } from "./vehicles/SUV";
 import { Van } from "./vehicles/Van";
 import { LightCommercial } from "./vehicles/LightCommercial";
 import { Truck } from "./vehicles/Truck";
+import { useYardManagement } from "@/state/YardManagementProvider";
 
 // ============================================================================
 // 1. CONFIGURATION
@@ -53,11 +54,11 @@ function generateBlockVehicles(
   const cx = block.provisionalPosition.x;
   const cz = block.provisionalPosition.z;
 
-  // Set safe clearance from block perimeter road edges
-  const marginX = 2.8;
-  const marginZ = 2.8;
-  const usableW = Math.max(10, w - marginX * 2);
-  const usableD = Math.max(6, d - marginZ * 2);
+  // Set safe clearance from block perimeter road edges so vehicles never overflow pad edges
+  const marginX = 2.4;
+  const marginZ = 2.4;
+  const usableW = Math.max(6, w - marginX * 2);
+  const usableD = Math.max(5, d - marginZ * 2);
 
   // If block is wider along X, rows run along X (vehicles face Z)
   // If block is deeper along Z, rows run along Z (vehicles face X)
@@ -65,62 +66,82 @@ function generateBlockVehicles(
   const isAlternativeApron = block.category === "roro_alt";
   const isCustoms = block.id === "NEW_CUSTOMS";
 
+  // Determine a SINGLE dedicated vehicle class and palette for this entire yard block
+  // This guarantees each yard is homogeneous and neatly segregated by vehicle type
+  let blockVehicleClass: VehicleClass = "sedan";
+  let blockPalette: string[] = SEDAN_PAINTS;
+
+  const bId = block.id.toUpperCase();
+  if (bId.includes("CUSTOMS") || bId.startsWith("A0") || bId.startsWith("B0")) {
+    blockVehicleClass = "pickup";
+    blockPalette = PICKUP_PAINTS;
+  } else if (bId === "04A" || bId === "11W") {
+    // Dedicated SUV block
+    blockVehicleClass = "suv";
+    blockPalette = SUV_PAINTS;
+  } else if (bId === "03A" || bId === "10W") {
+    // Dedicated Passenger Sedan block
+    blockVehicleClass = "sedan";
+    blockPalette = SEDAN_PAINTS;
+  } else if (bId === "02A" || bId === "09W") {
+    // Dedicated Compact hatchback block
+    blockVehicleClass = "compact";
+    blockPalette = COMPACT_PAINTS;
+  } else if (bId === "01A" || bId === "CY01") {
+    // Dedicated Luxury Sedan block
+    blockVehicleClass = "luxury_sedan";
+    blockPalette = LUXURY_PAINTS;
+  } else if (bId === "02C" || bId === "01C") {
+    // Dedicated Commercial Delivery Van block
+    blockVehicleClass = "van";
+    blockPalette = VAN_PAINTS;
+  } else if (bId === "02D" || bId === "01D") {
+    // Dedicated Light Commercial / Pickup block
+    blockVehicleClass = "pickup";
+    blockPalette = PICKUP_PAINTS;
+  } else if (bId === "01E") {
+    // Dedicated SUV block
+    blockVehicleClass = "suv";
+    blockPalette = SUV_PAINTS;
+  } else if (bId === "01F") {
+    // Dedicated Passenger Sedan block
+    blockVehicleClass = "sedan";
+    blockPalette = SEDAN_PAINTS;
+  } else if (bId === "01G") {
+    // Dedicated Compact Car block
+    blockVehicleClass = "compact";
+    blockPalette = COMPACT_PAINTS;
+  } else if (isAlternativeApron) {
+    blockVehicleClass = "truck";
+    blockPalette = TRUCK_PAINTS;
+  } else {
+    // Deterministic fallback based on block seed
+    const classes: VehicleClass[] = ["sedan", "compact", "suv", "van", "pickup", "luxury_sedan"];
+    const hash = Math.abs(seed) % classes.length;
+    blockVehicleClass = classes[hash];
+    blockPalette =
+      blockVehicleClass === "suv"
+        ? SUV_PAINTS
+        : blockVehicleClass === "compact"
+        ? COMPACT_PAINTS
+        : blockVehicleClass === "van"
+        ? VAN_PAINTS
+        : blockVehicleClass === "pickup"
+        ? PICKUP_PAINTS
+        : blockVehicleClass === "luxury_sedan"
+        ? LUXURY_PAINTS
+        : SEDAN_PAINTS;
+  }
+
   let vehicleIdx = 0;
 
   const createVehicle = (x: number, z: number, rotY: number) => {
     vehicleIdx++;
-    const rType = rand();
-
-    let vehicleClass: VehicleClass;
-    let color: string;
-
-    const isHeavyTransporter = isAlternativeApron && rType < 0.12;
-    const isCommercialUtility = isCustoms ? rType < 0.38 : rType < 0.20;
-
-    if (isHeavyTransporter) {
-      // Alternative apron heavy vehicle spots
-      const isCarCarrier = rand() < 0.60;
-      if (isCarCarrier) {
-        vehicleClass = "transporter";
-        color = pickRandom(TRANSPORTER_PAINTS, rand);
-      } else {
-        vehicleClass = "truck";
-        color = pickRandom(TRUCK_PAINTS, rand);
-      }
-    } else if (isCommercialUtility) {
-      // Vans, minibuses, and light commercial pickup trucks
-      const utilRoll = rand();
-      if (utilRoll < 0.55) {
-        vehicleClass = "van";
-        color = pickRandom(VAN_PAINTS, rand);
-      } else if (utilRoll < 0.78) {
-        vehicleClass = "pickup";
-        color = pickRandom(PICKUP_PAINTS, rand);
-      } else {
-        vehicleClass = "minibus";
-        color = pickRandom(VAN_PAINTS, rand);
-      }
-    } else {
-      // Passenger cars: compacts, sedans, luxury sedans, and SUVs
-      const carRoll = rand();
-      if (carRoll < 0.36) {
-        vehicleClass = "sedan";
-        color = pickRandom(SEDAN_PAINTS, rand);
-      } else if (carRoll < 0.60) {
-        vehicleClass = "compact";
-        color = pickRandom(COMPACT_PAINTS, rand);
-      } else if (carRoll < 0.80) {
-        vehicleClass = "suv";
-        color = pickRandom(SUV_PAINTS, rand);
-      } else {
-        vehicleClass = "luxury_sedan";
-        color = pickRandom(LUXURY_PAINTS, rand);
-      }
-    }
+    const color = pickRandom(blockPalette, rand);
 
     vehicles.push({
       id: `${block.id}-${vehicleIdx}`,
-      vehicleClass,
+      vehicleClass: blockVehicleClass,
       x,
       y: 0,
       z,
@@ -192,8 +213,6 @@ function generateBlockVehicles(
   return vehicles;
 }
 
-import { useYardManagement } from "@/state/YardManagementProvider";
-
 // ============================================================================
 // 3. MAIN EXPORTED RORO YARD COMPONENT
 // ============================================================================
@@ -255,47 +274,33 @@ export const YardRoRoVehicles = memo(function YardRoRoVehicles() {
 
   return (
     <group name="hipg-roro-vehicles">
-      {/* 1. RoRo Asphalt Parking Pads with Boundary Demarcations */}
+      {/* 1. RoRo Asphalt Parking Bay Demarcation Lines */}
       {roroBlocks.map((b) => {
         const w = b.provisionalPosition.approxWidth ?? 50;
         const d = b.provisionalPosition.approxDepth ?? 25;
-        const isAlt = b.category === "roro_alt";
-        const isCustoms = b.id === "NEW_CUSTOMS";
-        const padColor = isCustoms ? "#2B313A" : isAlt ? "#262C34" : "#1F242C";
+        const numStallLines = Math.min(24, Math.floor((w - 4) / 2.2));
 
         return (
           <group
             key={`pad-${b.id}`}
-            position={[b.provisionalPosition.x, 0.011, b.provisionalPosition.z]}
+            position={[b.provisionalPosition.x, 0.065, b.provisionalPosition.z]}
           >
-            {/* Dark asphalt parking pad */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-              <planeGeometry args={[w, d]} />
-              <meshStandardMaterial color={padColor} roughness={0.92} />
-            </mesh>
+            {/* White parking bay divider lines */}
+            {Array.from({ length: numStallLines }, (_, c) => {
+              const stallX = -w / 2 + 2.4 + c * 2.2;
+              return (
+                <mesh key={`stall-${c}`} rotation={[-Math.PI / 2, 0, 0]} position={[stallX, 0.002, 0]}>
+                  <planeGeometry args={[0.08, Math.max(4, d - 4)]} />
+                  <meshBasicMaterial color="#FFFFFF" transparent opacity={0.45} depthWrite={false} />
+                </mesh>
+              );
+            })}
 
-            {/* Perimeter safety line */}
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]}>
-              <planeGeometry args={[w, d]} />
-              <meshBasicMaterial
-                color={isCustoms ? COLORS.signal : isAlt ? "#DDA15E" : "#E9C46A"}
-                wireframe
-              />
+            {/* Central Aisle Directional Paint */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
+              <planeGeometry args={[w - 6, 0.18]} />
+              <meshBasicMaterial color="#EAB308" transparent opacity={0.65} depthWrite={false} />
             </mesh>
-
-            {/* Block Identification Text on ground */}
-            <Text
-              font={FONT_URL}
-              fontSize={d > 25 ? 2.5 : 1.8}
-              color="#A0AAB5"
-              fillOpacity={0.75}
-              position={[0, 0.016, 0]}
-              rotation={[-Math.PI / 2, 0, 0]}
-              anchorX="center"
-              anchorY="middle"
-            >
-              {b.label}
-            </Text>
           </group>
         );
       })}

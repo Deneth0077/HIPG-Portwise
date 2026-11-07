@@ -24,6 +24,7 @@ import { mulberry32 } from "@/data/containers";
 import { Glow, LIGHT, LightCone, Pool, litMat } from "./nightLights";
 import { HipgQuays } from "./HipgQuays";
 import { InteractiveBuildings } from "./InteractiveBuildings";
+import { InteractiveYardRoads } from "./InteractiveYardRoads";
 
 export const FONT_URL = "/fonts/BeVietnamPro-Bold.ttf";
 
@@ -125,68 +126,10 @@ function LaneDashes() {
   );
 }
 
-import { useYardManagement } from "@/state/YardManagementProvider";
-
 function BlockPads() {
-  const { yards, selectedYardId, draftPosition, draftDimensions } = useYardManagement();
-
-  const containerBlocks = useMemo(() => {
-    return yards
-      .filter(
-        (y) =>
-          y.status !== "inactive" &&
-          (y.yardType === "container" ||
-            y.yardType === "reefer" ||
-            y.yardType === "dual_purpose" ||
-            y.yardType === "customs" ||
-            y.capacityUnit === "teu")
-      )
-      .map((y) => {
-        const isDraft = y.id === selectedYardId && draftPosition;
-        const isDimDraft = y.id === selectedYardId && draftDimensions;
-        return {
-          id: y.id,
-          x: isDraft ? draftPosition.x : y.position.x,
-          z: isDraft ? draftPosition.z : y.position.z,
-          width: isDimDraft ? draftDimensions.width : y.width,
-          depth: isDimDraft ? draftDimensions.length : y.length,
-          category: y.yardType,
-        };
-      });
-  }, [yards, selectedYardId, draftPosition, draftDimensions]);
-
-  return (
-    <group>
-      {containerBlocks.map((b) => {
-        const w = b.width ?? 50;
-        const d = b.depth ?? 12;
-        const isReefer = b.category === "reefer" || b.id === "CC0" || b.id === "C09";
-        const isCustoms = b.category === "customs";
-        const padColor = isReefer ? "#DCE4E8" : isCustoms ? "#D4C2B4" : COLORS.pad;
-        return (
-          <group key={b.id}>
-            <Flat x={b.x} z={b.z} w={w} d={d} color={padColor} y={0.03} polygonOffset offsetFactor={-1} />
-            {/* Yellow perimeter safety lines */}
-            <Flat x={b.x} z={b.z + d / 2} w={w} d={0.25} color={COLORS.amber} y={0.06} polygonOffset offsetFactor={-2} />
-            <Flat x={b.x} z={b.z - d / 2} w={w} d={0.25} color={COLORS.amber} y={0.06} polygonOffset offsetFactor={-2} />
-            <Flat x={b.x - w / 2} z={b.z} w={0.25} d={d} color={COLORS.amber} y={0.06} polygonOffset offsetFactor={-2} />
-            <Flat x={b.x + w / 2} z={b.z} w={0.25} d={d} color={COLORS.amber} y={0.06} polygonOffset offsetFactor={-2} />
-            <Text
-              font={FONT_URL}
-              fontSize={d > 14 ? 1.8 : 1.3}
-              color="#545B64"
-              position={[b.x - w / 2 + 1.8, 0.08, b.z + d / 2 + 0.9]}
-              rotation={[-Math.PI / 2, 0, 0]}
-              anchorX="left"
-              anchorY="middle"
-            >
-              {b.id}
-            </Text>
-          </group>
-        );
-      })}
-    </group>
-  );
+  // Container & RoRo yard pads are now rendered with full 3D industrial aprons,
+  // expansion joints, bollards, and hazard demarcations in YardBlocks (Yard.tsx)
+  return null;
 }
 
 function Quay() {
@@ -607,8 +550,8 @@ export const Terrain = memo(function Terrain() {
       {/* Northeastern Elevated Plateau (BY4 structure area) */}
       <Flat x={185} z={-255} w={110} d={90} color="#D5DCC3" y={0} polygonOffset offsetFactor={1} />
 
-      {/* Dark asphalt road network providing clear corridor boundaries */}
-      <YardRoads />
+      {/* Dark asphalt road network providing clear corridor boundaries (Dynamic & Interactive) */}
+      <InteractiveYardRoads />
 
       {/* Concrete container pads with yellow boundary markings */}
       <BlockPads />
@@ -621,8 +564,6 @@ export const Terrain = memo(function Terrain() {
 
       {/* Gate 01 Main Terminal Entrance & Inspection Portal */}
       <Gate01 />
-
-      <Trees />
     </group>
   );
 });

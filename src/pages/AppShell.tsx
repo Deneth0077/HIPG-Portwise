@@ -6,6 +6,13 @@ import { SearchDialog } from "@/components/hud/SearchDialog";
 import { BerthingToasts } from "@/components/hud/BerthingToasts";
 import { TimeBar, TimeKeys } from "@/components/hud/TimeBar";
 import { Building3DControls } from "@/components/yard/Building3DControls";
+import { Yard3DControls } from "@/components/yard/Yard3DControls";
+import { Road3DControls } from "@/components/yard/Road3DControls";
+import { CctvControlPanel } from "@/components/cctv/CctvControlPanel";
+import { Cctv3DControls } from "@/components/cctv/Cctv3DControls";
+import { ClashBuildDock } from "@/components/twin/ClashBuildDock";
+import { TwinPropertiesInspector } from "@/components/twin/TwinPropertiesInspector";
+import { TwinModeToolbar } from "@/components/twin/TwinModeToolbar";
 import { useIsCompact } from "@/hooks/useMediaQuery";
 import { usePort } from "@/state/PortProvider";
 import { useBootRevealed } from "@/state/boot";
@@ -42,7 +49,18 @@ export default function AppShell() {
           <BerthingToasts />
           {/* On phones and tablets the time controls live in the bottom sheet header. */}
           {isCompact ? null : <TimeBar />}
+          {isCompact ? (
+            <div className="pointer-events-auto fixed top-[calc(var(--hud-top)+0.5rem)] left-1/2 -translate-x-1/2 z-30">
+              <TwinModeToolbar />
+            </div>
+          ) : null}
           <Building3DControls />
+          <Yard3DControls />
+          <Road3DControls />
+          <CctvControlPanel />
+          <Cctv3DControls />
+          <ClashBuildDock />
+          <TwinPropertiesInspector />
         </>
       ) : null}
       <SearchDialog />

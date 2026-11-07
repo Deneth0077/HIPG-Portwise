@@ -7,6 +7,7 @@ import { mat, unitBox } from "./parts";
 import { FONT_URL } from "./Terrain";
 import { Glow, LIGHT, litMat } from "./nightLights";
 import { useBuildingManagement } from "@/state/BuildingManagementProvider";
+import { useCctvManagement } from "@/state/CctvManagementProvider";
 import { cameraApi } from "./CameraRig";
 
 function WarehouseModel({
@@ -28,7 +29,7 @@ function WarehouseModel({
       {/* Main warehouse hall */}
       <mesh
         geometry={unitBox}
-        material={mat(isSelected ? "#F5EFE6" : "#ECE7DC", { roughness: 0.85 })}
+        material={mat(isSelected ? "#F5EFE6" : "#ECE7DC", { rough: 0.85 })}
         position={[0, h / 2, 0]}
         scale={[w, h, d]}
         castShadow
@@ -153,6 +154,7 @@ export const InteractiveBuildings = memo(function InteractiveBuildings() {
     isPickingLocation,
     onLocationPicked,
   } = useBuildingManagement();
+  const { isCctvMode } = useCctvManagement();
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const isDragging = useRef(false);
@@ -235,17 +237,20 @@ export const InteractiveBuildings = memo(function InteractiveBuildings() {
             position={[posX, 0, posZ]}
             rotation={[0, rotY, 0]}
             onPointerOver={(e) => {
+              if (isCctvMode) return;
               e.stopPropagation();
               setHoveredId(b.id);
               document.body.style.cursor = "pointer";
             }}
             onPointerOut={() => {
+              if (isCctvMode) return;
               setHoveredId((prev) => (prev === b.id ? null : prev));
               if (!isDragging.current) {
                 document.body.style.cursor = "";
               }
             }}
             onPointerDown={(e) => {
+              if (isCctvMode) return;
               e.stopPropagation();
               selectBuilding(b.id);
               isDragging.current = true;

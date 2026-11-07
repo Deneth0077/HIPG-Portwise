@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import type { ThreeEvent } from "@react-three/fiber";
-import { Outlines } from "@react-three/drei";
-import { CONTAINERS, containerById } from "@/data/containers";
+import { Outlines, Text } from "@react-three/drei";
+import { CONTAINERS, containerById, buildContainers } from "@/data/containers";
+import type { BlockCategory } from "@/data/types";
 import { YARD_BLOCKS, blockById } from "@/data/port";
 import { BLOCK_HALF_X, BLOCK_HALF_Z, COLORS, CONTAINER_COLORS } from "@/data/layout";
 import { selKey, usePort } from "@/state/PortProvider";
@@ -13,21 +14,50 @@ import { Part, Selectable, mat, unitBox } from "./parts";
 import { Chip3D } from "./Chip3D";
 import type { ChipTone } from "./Chip3D";
 import { Glow, LIGHT } from "./nightLights";
+import { useYardManagement } from "@/state/YardManagementProvider";
+import { cameraApi } from "./CameraRig";
+import { FONT_URL } from "./Terrain";
 
 const MUTED = new THREE.Color("#D8D2C4");
 
 export const fillTone = (fill: number): ChipTone => (fill >= 0.85 ? "brick" : fill >= 0.6 ? "amber" : "moss");
 
-/** All yard containers as a single instanced mesh; per-instance picking opens the container. */
+/** All yard containers as a single instanced mesh; dynamically fits custom yard widths, lengths, and positions. */
 export function YardContainers() {
   const { yardFilter, selection, hovered, setHovered, open, view } = usePort();
+  const { yards, selectedYardId, draftPosition, draftDimensions } = useYardManagement();
   const ref = useRef<THREE.InstancedMesh>(null);
+
+  // Re-generate container coordinates whenever yard blocks are resized or moved
+  const activeContainers = useMemo(() => {
+    // Map live yard blocks to container generation schema
+    const containerBlocks = yards
+      .filter((y) => y.status !== "inactive" && (y.yardType === "container" || y.capacityUnit === "teu" || y.yardType === "dual_purpose" || y.yardType === "reefer"))
+      .map((y) => {
+        const isSel = y.id === selectedYardId;
+        const posX = isSel && draftPosition ? draftPosition.x : y.position.x;
+        const posZ = isSel && draftPosition ? draftPosition.z : y.position.z;
+        const w = isSel && draftDimensions ? draftDimensions.width : y.width;
+        const l = isSel && draftDimensions ? draftDimensions.length : y.length;
+        return {
+          id: y.id,
+          category: (y.yardType === "reefer" ? "reefer" : y.yardType === "dual_purpose" ? "dual_purpose" : "container") as BlockCategory,
+          x: posX,
+          z: posZ,
+          width: w,
+          depth: l,
+          fill: y.totalCapacity > 0 ? y.occupiedCount / y.totalCapacity : 0.6,
+        };
+      });
+
+    return buildContainers(containerBlocks);
+  }, [yards, selectedYardId, draftPosition, draftDimensions]);
 
   useLayoutEffect(() => {
     const m = ref.current;
     if (!m) return;
     const o = new THREE.Object3D();
-    CONTAINERS.forEach((c, i) => {
+    activeContainers.forEach((c, i) => {
       o.position.set(c.x, c.y, c.z);
       o.scale.set(3.0, 1.25, 1.3);
       o.updateMatrix();
@@ -35,24 +65,24 @@ export function YardContainers() {
     });
     m.instanceMatrix.needsUpdate = true;
     m.computeBoundingSphere();
-  }, []);
+  }, [activeContainers]);
 
   useLayoutEffect(() => {
     const m = ref.current;
     if (!m) return;
     const col = new THREE.Color();
-    CONTAINERS.forEach((c, i) => {
+    activeContainers.forEach((c, i) => {
       const match = view !== "yard" || yardFilter === "all" || c.category === yardFilter;
       col.set(c.color);
       m.setColorAt(i, match ? col : MUTED);
     });
     if (m.instanceColor) m.instanceColor.needsUpdate = true;
-  }, [yardFilter, view]);
+  }, [activeContainers, yardFilter, view]);
 
   const onMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     if (e.instanceId === undefined) return;
-    const c = CONTAINERS[e.instanceId];
+    const c = activeContainers[e.instanceId];
     if (c && selKey(hovered) !== `container:${c.id}`) setHovered({ kind: "container", id: c.id });
     document.body.style.cursor = "pointer";
   };
@@ -63,18 +93,18 @@ export function YardContainers() {
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation();
     if (e.delta > 6 || e.instanceId === undefined) return;
-    const c = CONTAINERS[e.instanceId];
+    const c = activeContainers[e.instanceId];
     if (!c) return;
     haptic("selection");
     open({ kind: "container", id: c.id });
   };
 
-  const selected = selection?.kind === "container" ? containerById(selection.id) : undefined;
-  const hover = hovered?.kind === "container" ? containerById(hovered.id) : undefined;
+  const selected = selection?.kind === "container" ? (activeContainers.find(x => x.id === selection.id) || containerById(selection.id)) : undefined;
+  const hover = hovered?.kind === "container" ? (activeContainers.find(x => x.id === hovered.id) || containerById(hovered.id)) : undefined;
 
   return (
     <group>
-      <instancedMesh ref={ref} args={[undefined, undefined, CONTAINERS.length]} geometry={unitBox} castShadow receiveShadow onPointerMove={onMove} onPointerOut={onOut} onClick={onClick}>
+      <instancedMesh ref={ref} args={[undefined, undefined, activeContainers.length]} geometry={unitBox} castShadow receiveShadow onPointerMove={onMove} onPointerOut={onOut} onClick={onClick}>
         <meshStandardMaterial roughness={0.82} />
       </instancedMesh>
       {hover && hover.id !== selected?.id ? (
@@ -123,8 +153,7 @@ const KEY_OVERVIEW_BLOCKS = new Set([
   "NEW_CUSTOMS",
 ]);
 
-import { useYardManagement } from "@/state/YardManagementProvider";
-import { cameraApi } from "./CameraRig";
+
 
 /** Color mapping for yard occupancy health state */
 export function getYardOccupancyColor(utilization: number, status: string): string {
@@ -133,6 +162,150 @@ export function getYardOccupancyColor(utilization: number, status: string): stri
   if (utilization >= 80) return "#F97316";
   if (utilization >= 60) return "#EAB308";
   return "#10B981";
+}
+
+interface IndustrialYardApronProps {
+  width: number;
+  length: number;
+  yardType: string;
+  code: string;
+  capacity: number;
+  capacityUnit: string;
+  isSel: boolean;
+  isHover: boolean;
+  statusColor: string;
+}
+
+/**
+ * Realistic 3D Industrial Yard Apron
+ * Renders heavy-duty concrete/asphalt apron slabs, precast expansion joints,
+ * hazard perimeter lines, safety steel corner bollards, and ground stencil codes.
+ */
+function IndustrialYardApron({
+  width,
+  length,
+  yardType,
+  code,
+  capacity,
+  capacityUnit,
+  isSel,
+  isHover,
+  statusColor,
+}: IndustrialYardApronProps) {
+  const isRoRo = yardType === "roro";
+  const isCustoms = yardType === "customs";
+  const isReefer = yardType === "reefer";
+
+  const concreteColor = isRoRo
+    ? "#1E242C"
+    : isReefer
+    ? "#E2E8F0"
+    : isCustoms
+    ? "#CBD5E1"
+    : "#D1D5DB";
+
+  const padHeight = 0.06;
+
+  // Expansion joint grid (etched grooves every 6m)
+  const jointSpacing = 6.0;
+  const numJointsX = Math.max(0, Math.floor(width / jointSpacing) - 1);
+  const numJointsZ = Math.max(0, Math.floor(length / jointSpacing) - 1);
+
+  // 4 Corner Safety Bollards
+  const inset = 0.8;
+  const bollardPositions = [
+    [-width / 2 + inset, -length / 2 + inset],
+    [width / 2 - inset, -length / 2 + inset],
+    [-width / 2 + inset, length / 2 - inset],
+    [width / 2 - inset, length / 2 - inset],
+  ];
+
+  return (
+    <group>
+      {/* 1. Heavy Reinforced Concrete Apron Slab with Physical Depth */}
+      <mesh position={[0, padHeight / 2, 0]} receiveShadow>
+        <boxGeometry args={[width, padHeight, length]} />
+        <meshStandardMaterial
+          color={concreteColor}
+          roughness={isRoRo ? 0.92 : 0.8}
+          metalness={isRoRo ? 0.1 : 0.05}
+        />
+      </mesh>
+
+      {/* 2. Concrete Slab Expansion Joint Grooves */}
+      {!isRoRo && (
+        <group position={[0, padHeight + 0.002, 0]}>
+          {Array.from({ length: numJointsX }, (_, i) => {
+            const x = -width / 2 + (i + 1) * jointSpacing;
+            return (
+              <mesh key={`jx-${i}`} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[0.06, length - 0.4]} />
+                <meshBasicMaterial color="#94A3B8" depthWrite={false} />
+              </mesh>
+            );
+          })}
+          {Array.from({ length: numJointsZ }, (_, i) => {
+            const z = -length / 2 + (i + 1) * jointSpacing;
+            return (
+              <mesh key={`jz-${i}`} rotation={[-Math.PI / 2, 0, 0]}>
+                <planeGeometry args={[width - 0.4, 0.06]} />
+                <meshBasicMaterial color="#94A3B8" depthWrite={false} />
+              </mesh>
+            );
+          })}
+        </group>
+      )}
+
+      {/* 3. High-Visibility Hazard Safety Border */}
+      <group position={[0, padHeight + 0.004, 0]}>
+        {[
+          [0, length / 2 - 0.18, width, 0.36],
+          [0, -length / 2 + 0.18, width, 0.36],
+          [width / 2 - 0.18, 0, 0.36, length],
+          [-width / 2 + 0.18, 0, 0.36, length],
+        ].map(([px, pz, pw, pd], i) => (
+          <mesh key={`border-${i}`} rotation={[-Math.PI / 2, 0, 0]} position={[px, 0, pz]}>
+            <planeGeometry args={[pw, pd]} />
+            <meshBasicMaterial
+              color={isSel ? "#0284C7" : isHover ? "#F59E0B" : "#EAB308"}
+              depthWrite={false}
+            />
+          </mesh>
+        ))}
+      </group>
+
+      {/* 4. Industrial Safety Corner Bollards (Yellow Steel + Reflective Collar) */}
+      {bollardPositions.map(([bx, bz], i) => (
+        <group key={`bollard-${i}`} position={[bx, padHeight, bz]}>
+          <mesh position={[0, 0.45, 0]} castShadow>
+            <cylinderGeometry args={[0.16, 0.16, 0.9, 16]} />
+            <meshStandardMaterial color="#EAB308" roughness={0.3} metalness={0.6} />
+          </mesh>
+          <mesh position={[0, 0.04, 0]}>
+            <boxGeometry args={[0.42, 0.08, 0.42]} />
+            <meshStandardMaterial color="#334155" roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 0.75, 0]}>
+            <cylinderGeometry args={[0.165, 0.165, 0.18, 16]} />
+            <meshBasicMaterial color="#F8FAFC" />
+          </mesh>
+        </group>
+      ))}
+
+      {/* 5. Painted Stencil Ground Identification */}
+      <Text
+        font={FONT_URL}
+        fontSize={Math.min(1.8, Math.max(1.1, length * 0.1))}
+        color={isRoRo ? "#94A3B8" : "#475569"}
+        position={[-width / 2 + 2.5, padHeight + 0.006, length / 2 - 1.8]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        anchorX="left"
+        anchorY="middle"
+      >
+        {`▶ ${code} · ${yardType.toUpperCase()} · ${capacity} ${capacityUnit.toUpperCase()}`}
+      </Text>
+    </group>
+  );
 }
 
 /** Configurable interactive yard blocks with dynamic dimensions, status colors, and 3D map editing */
@@ -242,11 +415,24 @@ export function YardBlocks() {
             position={[posX, 0, posZ]}
             rotation={[0, -rotRad, 0]}
           >
-            {/* Clickable & Draggable Ground Pad */}
+            {/* 1. Realistic 3D Industrial Yard Apron (Concrete/Asphalt slab, expansion joints, hazard borders, bollards) */}
+            <IndustrialYardApron
+              width={width}
+              length={length}
+              yardType={b.yardType}
+              code={b.code}
+              capacity={b.totalCapacity}
+              capacityUnit={b.capacityUnit}
+              isSel={isSel}
+              isHover={isHover}
+              statusColor={statusColor}
+            />
+
+            {/* 2. Clickable & Draggable Ground Interaction Layer */}
             <Selectable sel={{ kind: "block", id: b.id }}>
               <mesh
                 rotation={[-Math.PI / 2, 0, 0]}
-                position={[0, 0.05, 0]}
+                position={[0, 0.08, 0]}
                 onPointerDown={(e) => {
                   if (is3DEditMode && isSel) {
                     e.stopPropagation();
@@ -272,30 +458,11 @@ export function YardBlocks() {
                 <meshBasicMaterial
                   color={statusColor}
                   transparent
-                  opacity={isSel ? 0.35 : isHover ? 0.25 : 0.12}
+                  opacity={isSel ? 0.25 : isHover ? 0.18 : 0}
                   depthWrite={false}
                 />
               </mesh>
             </Selectable>
-
-            {/* Perimeter Safety Border & Corners */}
-            <group position={[0, 0.065, 0]}>
-              {[
-                [0, length / 2, width, 0.4],
-                [0, -length / 2, width, 0.4],
-                [width / 2, 0, 0.4, length],
-                [-width / 2, 0, 0.4, length],
-              ].map(([x, z, ww, dd], i) => (
-                <mesh key={i} rotation={[-Math.PI / 2, 0, 0]} position={[x, 0, z]} raycast={() => null}>
-                  <planeGeometry args={[ww, dd]} />
-                  <meshBasicMaterial
-                    color={isSel ? (is3DEditMode ? COLORS.signal : "#E65100") : isHover ? COLORS.amber : statusColor}
-                    transparent
-                    opacity={isSel ? 0.95 : isHover ? 0.75 : 0.4}
-                  />
-                </mesh>
-              ))}
-            </group>
 
             {/* 3D Floating Chip Label */}
             {visibleChip ? (

@@ -6,6 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { PortProvider } from "@/state/PortProvider";
 import { YardManagementProvider } from "@/state/YardManagementProvider";
 import { BuildingManagementProvider } from "@/state/BuildingManagementProvider";
+import { CctvManagementProvider } from "@/state/CctvManagementProvider";
+import { RoadManagementProvider } from "@/state/RoadManagementProvider";
+import { InteractiveTwinProvider } from "@/state/InteractiveTwinProvider";
 import { LiveWeatherSync } from "@/components/LiveWeatherSync";
 
 import AppShell from "./pages/AppShell";
@@ -28,23 +31,29 @@ const App = () => (
         <PortProvider>
           <YardManagementProvider>
             <BuildingManagementProvider>
-            <Routes>
-              <Route element={<AppShell />}>
-                <Route path="/" element={<Overview />} />
-                <Route path="/vessels" element={<Vessels />} />
-                <Route path="/vessels/:id" element={<VesselDetail />} />
-                <Route path="/yard" element={<Yard />} />
-                <Route path="/yard/:blockId" element={<Yard />} />
-                <Route path="/shipments" element={<Navigate to="/shipments/SHP-20931" replace />} />
-                <Route path="/shipments/:id" element={<Shipment />} />
-                <Route path="/logistics" element={<Logistics />} />
-                <Route path="/logistics/:id" element={<Logistics />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BuildingManagementProvider>
-        </YardManagementProvider>
-      </PortProvider>
+              <CctvManagementProvider>
+                <RoadManagementProvider>
+                  <InteractiveTwinProvider>
+                    <Routes>
+                      <Route element={<AppShell />}>
+                      <Route path="/" element={<Overview />} />
+                      <Route path="/vessels" element={<Vessels />} />
+                      <Route path="/vessels/:id" element={<VesselDetail />} />
+                      <Route path="/yard" element={<Yard />} />
+                      <Route path="/yard/:blockId" element={<Yard />} />
+                      <Route path="/shipments" element={<Navigate to="/shipments/SHP-20931" replace />} />
+                      <Route path="/shipments/:id" element={<Shipment />} />
+                      <Route path="/logistics" element={<Logistics />} />
+                      <Route path="/logistics/:id" element={<Logistics />} />
+                    </Route>
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                  </InteractiveTwinProvider>
+                </RoadManagementProvider>
+              </CctvManagementProvider>
+            </BuildingManagementProvider>
+          </YardManagementProvider>
+        </PortProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

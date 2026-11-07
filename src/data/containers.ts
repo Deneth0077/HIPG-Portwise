@@ -61,10 +61,11 @@ function checkDigit(code: string): number {
 export const FEATURED_CONTAINER_ID = "SSLU4820197";
 export const FEATURED_BLOCK_ID = "L02";
 
-function buildContainers(): Container[] {
+export function buildContainers(customBlocks?: Array<{ id: string; category: BlockCategory; x: number; z: number; width?: number; depth?: number; fill?: number }>): Container[] {
+  const blocksToUse = customBlocks || YARD_BLOCKS;
   const out: Container[] = [];
   const rand = mulberry32(20931);
-  for (const block of YARD_BLOCKS) {
+  for (const block of blocksToUse) {
     const isContainerZone =
       block.category === "container" ||
       block.category === "dual_purpose" ||

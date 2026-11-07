@@ -321,11 +321,11 @@ export const HIPG_YARD_BLOCKS: HipgYardBlockDef[] = [
   { id: "01A", label: "01A", category: "roro", description: "RoRo parking block 01A (Berth 04/03 corner)", provisionalPosition: { x: 96, z: 32, approxWidth: 60, approxDepth: 28 } },
   { id: "02C", label: "02C", category: "roro", description: "RoRo parking block 02C (Central southern tier)", provisionalPosition: { x: 28, z: 126, approxWidth: 68, approxDepth: 26 } },
   { id: "02D", label: "02D", category: "roro", description: "RoRo parking block 02D (Central southern tier)", provisionalPosition: { x: 28, z: 158, approxWidth: 68, approxDepth: 26 } },
-  { id: "01C", label: "01C", category: "roro", description: "RoRo parking block 01C (Eastern tier facing quays)", provisionalPosition: { x: 96, z: 120, approxWidth: 60, approxDepth: 20 } },
-  { id: "01D", label: "01D", category: "roro", description: "RoRo parking block 01D (Eastern tier facing quays)", provisionalPosition: { x: 96, z: 144, approxWidth: 60, approxDepth: 20 } },
-  { id: "01E", label: "01E", category: "roro", description: "RoRo parking block 01E (Eastern tier facing quays)", provisionalPosition: { x: 96, z: 168, approxWidth: 60, approxDepth: 20 } },
-  { id: "01F", label: "01F", category: "roro", description: "RoRo parking block 01F (Eastern tier facing quays)", provisionalPosition: { x: 96, z: 192, approxWidth: 60, approxDepth: 20 } },
-  { id: "01G", label: "01G", category: "roro", description: "RoRo parking block 01G (Eastern tier facing quays)", provisionalPosition: { x: 96, z: 216, approxWidth: 60, approxDepth: 20 } },
+  { id: "01C", label: "01C", category: "roro", description: "RoRo parking block 01C (Eastern tier facing quays)", provisionalPosition: { x: 92, z: 122, approxWidth: 50, approxDepth: 18 } },
+  { id: "01D", label: "01D", category: "roro", description: "RoRo parking block 01D (Eastern tier facing quays)", provisionalPosition: { x: 92, z: 144, approxWidth: 50, approxDepth: 18 } },
+  { id: "01E", label: "01E", category: "roro", description: "RoRo parking block 01E (Eastern tier facing quays)", provisionalPosition: { x: 92, z: 166, approxWidth: 50, approxDepth: 18 } },
+  { id: "01F", label: "01F", category: "roro", description: "RoRo parking block 01F (Eastern tier facing quays)", provisionalPosition: { x: 92, z: 188, approxWidth: 50, approxDepth: 18 } },
+  { id: "01G", label: "01G", category: "roro", description: "RoRo parking block 01G (Eastern tier facing quays)", provisionalPosition: { x: 92, z: 210, approxWidth: 50, approxDepth: 18 } },
 
   // --------------------------------------------------------------------------
   // B. Alternative Yard Area for RoRo (7 Areas)

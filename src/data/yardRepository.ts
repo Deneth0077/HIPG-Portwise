@@ -17,8 +17,8 @@ import {
   calculateYardMetrics,
 } from "./yardTypes";
 
-const STORAGE_KEY = "hipg_yard_management_v3";
-const STORAGE_VERSION = 3;
+const STORAGE_KEY = "hipg_yard_management_v4";
+const STORAGE_VERSION = 4;
 
 /** Maps legacy HIPG block category to new YardType & default capacity unit */
 function mapHipgCategory(category: string): { yardType: YardType; capacityUnit: CapacityUnit } {
